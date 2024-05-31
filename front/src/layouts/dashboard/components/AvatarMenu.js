@@ -1,20 +1,13 @@
-import React from "react";
-import {
-  Menu,
-  MenuItem,
-  IconButton,
-  Typography,
-  Avatar,
-  Divider,
-  ListItemIcon,
-} from "@mui/material";
-import { useState } from "react";
-import Logout from "@mui/icons-material/Logout";
+import React, { useState } from "react";
+import { Menu, MenuItem, IconButton, Avatar, Divider, ListItemIcon } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { useUser } from "UserContext";
+import Logout from "@mui/icons-material/Logout";
 
 const AvatarMenu = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const navigate = useNavigate();
+  const { user, setUser } = useUser();
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -25,9 +18,9 @@ const AvatarMenu = () => {
   };
 
   const handleLogout = () => {
-    // Cierra el menú antes de navegar
-    handleClose();
-    // Aquí puedes agregar cualquier lógica de cierre de sesión, como limpiar tokens, etc.
+    setUser(null);
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
     navigate("/authentication/sign-in");
   };
 
@@ -41,7 +34,7 @@ const AvatarMenu = () => {
         aria-haspopup="true"
         aria-expanded={Boolean(anchorEl) ? "true" : undefined}
       >
-        <Avatar sx={{ width: 32, height: 32 }}>E</Avatar>
+        <Avatar sx={{ width: 32, height: 32 }}>{user ? user.first_name[0] : "U"}</Avatar>
       </IconButton>
       <Menu
         anchorEl={anchorEl}
@@ -59,6 +52,9 @@ const AvatarMenu = () => {
               height: 32,
               ml: -0.5,
               mr: 1,
+              "&:hover": {
+                backgroundColor: "transparent",
+              },
             },
             "&:before": {
               content: '""',
@@ -72,19 +68,22 @@ const AvatarMenu = () => {
               transform: "translateY(-50%) rotate(45deg)",
               zIndex: 0,
             },
+            "& .MuiTypography-root": {
+              color: "inherit",
+              "&:hover": {
+                color: "inherit",
+              },
+            },
           },
         }}
         transformOrigin={{ horizontal: "right", vertical: "top" }}
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
       >
         <MenuItem>
-          <Avatar sx={{ width: 32, height: 32 }}>E</Avatar>
-          <Typography variant="body1">Emmanuel Dorantes Ayala</Typography>
+          <Avatar sx={{ width: 32, height: 32 }} />
+          {user ? `${user.first_name} ${user.paternal_last_name}` : "Usuario"}
         </MenuItem>
-        <MenuItem>Perfil</MenuItem>
-        <MenuItem>Configuración personal</MenuItem>
-        <MenuItem>Notificaciones</MenuItem>
-        <MenuItem>Tema</MenuItem>
+        <MenuItem onClick={() => navigate("/profile")}>Perfil</MenuItem>
         <Divider />
         <MenuItem onClick={handleLogout}>
           <ListItemIcon>

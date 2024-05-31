@@ -80,4 +80,12 @@ async def login_user(login: Login):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     if not verify_password(login.password, user["password"]):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
-    return {"email": login.email, "message": "Login successful"}
+    user_data = {
+        "id": str(user["_id"]),
+        "first_name": user["first_name"],
+        "paternal_last_name": user["paternal_last_name"],
+        "maternal_last_name": user["maternal_last_name"],
+        "email": user["email"]
+    }
+    return {"token": "dummy_token", "user": user_data}  # Asegúrate de devolver tanto el token como los datos del usuario
+

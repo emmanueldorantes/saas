@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Card from "@mui/material/Card";
@@ -14,6 +14,7 @@ import MDTypography from "components/MDTypography";
 import MDInput from "components/MDInput";
 import MDButton from "components/MDButton";
 import BasicLayout from "layouts/authentication/components/BasicLayout";
+import { useUser } from "UserContext";
 
 function Basic() {
   const [email, setEmail] = useState("");
@@ -21,6 +22,7 @@ function Basic() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { setUser } = useUser();
 
   const handleSetRememberMe = () => setRememberMe(!rememberMe);
 
@@ -33,13 +35,21 @@ function Basic() {
         email,
         password,
       });
-      console.log(response.data);
-      if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
+
+      console.log(response); // Para depuración
+
+      if (response.status === 200 && response.data.token && response.data.user) {
+        const userData = response.data;
+        localStorage.setItem("token", userData.token);
+        localStorage.setItem("user", JSON.stringify(userData.user));
+        setUser(userData.user);
+        navigate("/dashboard");
+      } else {
+        setError("Respuesta inválida del servidor. Inténtalo de nuevo.");
       }
-      navigate("/dashboard");
     } catch (error) {
-      setError("Credenciales incorrectas. Inténtalo de nuevo.");
+      console.error("Error al conectar con el servidor:", error);
+      setError("Error al conectar con el servidor. Inténtalo de nuevo.");
     }
   };
 
