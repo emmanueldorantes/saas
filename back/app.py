@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, EmailStr, ValidationError
+=======
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, EmailStr
+>>>>>>> 16b7cee11c837688b9310dd3470549e967640c19
 from pymongo import MongoClient
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
@@ -51,6 +56,7 @@ def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
 @app.post("/register")
+<<<<<<< HEAD
 async def register_user(user: User, request: Request):
     try:
         # Imprime la solicitud completa para depuración
@@ -80,6 +86,29 @@ async def register_user(user: User, request: Request):
         raise HTTPException(status_code=422, detail=e.errors())
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+=======
+async def register_user(user: User):
+    if user.email != user.confirm_email:
+        raise HTTPException(status_code=400, detail="Emails do not match")
+    if user.password != user.confirm_password:
+        raise HTTPException(status_code=400, detail="Passwords do not match")
+    
+    existing_user = users_collection.find_one({"email": user.email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Encriptar la contraseña
+    user_data = user.dict()
+    user_data["password"] = get_password_hash(user.password)
+    
+    # Eliminar campos innecesarios antes de guardar
+    del user_data["confirm_email"]
+    del user_data["confirm_password"]
+    
+    # Guardar el usuario en la base de datos
+    user_id = users_collection.insert_one(user_data).inserted_id
+    return {"id": str(user_id), "email": user.email}
+>>>>>>> 16b7cee11c837688b9310dd3470549e967640c19
 
 @app.post("/login")
 async def login_user(login: Login):
@@ -95,6 +124,7 @@ async def login_user(login: Login):
         "maternal_last_name": user["maternal_last_name"],
         "email": user["email"]
     }
+<<<<<<< HEAD
     return {"token": "dummy_token", "user": user_data}
 
 @app.get("/users")
@@ -105,4 +135,7 @@ async def get_users():
     return users
 
 
+=======
+    return {"token": "dummy_token", "user": user_data}  # Asegúrate de devolver tanto el token como los datos del usuario
+>>>>>>> 16b7cee11c837688b9310dd3470549e967640c19
 
