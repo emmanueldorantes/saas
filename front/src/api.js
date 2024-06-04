@@ -12,7 +12,6 @@ export const registerUser = async (userData) => {
     throw error;
   }
 };
-<<<<<<< HEAD
 
 export const getUsers = async () => {
   try {
@@ -23,5 +22,3 @@ export const getUsers = async () => {
     throw error;
   }
 };
-=======
->>>>>>> 16b7cee11c837688b9310dd3470549e967640c19

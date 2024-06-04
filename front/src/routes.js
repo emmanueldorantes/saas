@@ -1,13 +1,9 @@
 // src/routes.js
 import Dashboard from "layouts/dashboard";
-<<<<<<< HEAD
 import Profile from "layouts/profile";
 import SignIn from "layouts/authentication/sign-in";
-import UsersTable from "layouts/tables/UsersTable"; // Importa el nuevo componente
-=======
-import UsersPage from "layouts/users/UsersPage";
-import SignIn from "layouts/authentication/sign-in";
->>>>>>> 16b7cee11c837688b9310dd3470549e967640c19
+import UsersTable from "layouts/tables/UsersTable";
+import ProfilesTable from "layouts/profiles/ProfilesTable";
 
 // @mui icons
 import Icon from "@mui/material/Icon";
@@ -24,11 +20,10 @@ const routes = [
   {
     type: "collapse",
     name: "Users",
-<<<<<<< HEAD
     key: "users-table",
     icon: <Icon fontSize="small">people</Icon>,
     route: "/users-table",
-    component: <UsersTable />, // Añade la nueva ruta aquí
+    component: <UsersTable />,
   },
   {
     type: "route",
@@ -36,12 +31,14 @@ const routes = [
     key: "profile",
     route: "/profile",
     component: <Profile />,
-=======
-    key: "users",
-    icon: <Icon fontSize="small">people</Icon>,
-    route: "/users",
-    component: <UsersPage />,
->>>>>>> 16b7cee11c837688b9310dd3470549e967640c19
+  },
+  {
+    type: "collapse",
+    name: "Profiles",
+    key: "profiles",
+    icon: <Icon fontSize="small">person</Icon>,
+    route: "/profiles",
+    component: <ProfilesTable />,
   },
   {
     type: "route",
