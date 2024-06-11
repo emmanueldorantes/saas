@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Table, Button, Modal, Form, Input, DatePicker, Select } from "antd";
+import { Table, Button, Modal, Form, Input, DatePicker, Select, message, Typography } from "antd";
 import moment from "moment";
-import { useMaterialUIController, setTransparentNavbar } from "context";
 import MDBox from "components/MDBox";
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import Footer from "examples/Footer";
 
 const { Option } = Select;
+const { Title } = Typography;
 
 function UsersTable() {
   const [users, setUsers] = useState([]);
@@ -16,14 +16,17 @@ function UsersTable() {
   const [editingUser, setEditingUser] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const [controller, dispatch] = useMaterialUIController();
-
   useEffect(() => {
     const fetchData = async () => {
-      const usersResponse = await axios.get("http://localhost:8000/users");
-      setUsers(usersResponse.data);
-      const profilesResponse = await axios.get("http://localhost:8000/profiles");
-      setProfiles(profilesResponse.data);
+      try {
+        const usersResponse = await axios.get("http://localhost:8000/users");
+        setUsers(usersResponse.data);
+        const profilesResponse = await axios.get("http://localhost:8000/profiles");
+        setProfiles(profilesResponse.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        message.error("Error fetching data");
+      }
     };
     fetchData();
   }, []);
@@ -39,29 +42,89 @@ function UsersTable() {
   };
 
   const handleDeleteUser = async (userId) => {
-    await axios.delete(`http://localhost:8000/users/${userId}`);
-    setUsers(users.filter((user) => user._id !== userId));
+    if (!userId) {
+      message.error("Invalid user ID");
+      return;
+    }
+    try {
+      await axios.delete(`http://localhost:8000/users/${userId}`);
+      setUsers(users.filter((user) => user._id !== userId));
+      message.success("User deleted successfully");
+    } catch (error) {
+      console.error("Error deleting user:", error.response?.data?.detail || "Unknown error");
+      message.error("Error deleting user: " + (error.response?.data?.detail || "Unknown error"));
+    }
   };
 
   const handleSaveUser = async (values) => {
-    if (editingUser) {
-      await axios.put(`http://localhost:8000/users/${editingUser._id}`, values);
-    } else {
-      await axios.post("http://localhost:8000/users", values);
+    const userData = {
+      ...values,
+      birth_date: values.birth_date.toISOString(),
+      created_at: new Date().toISOString(),
+      status: "active",
+    };
+    console.log("User Data to be sent: ", userData);
+    try {
+      if (editingUser) {
+        await axios.put(`http://localhost:8000/users/${editingUser._id}`, userData);
+      } else {
+        await axios.post("http://localhost:8000/users", userData);
+      }
+      const usersResponse = await axios.get("http://localhost:8000/users");
+      setUsers(usersResponse.data);
+      setIsModalVisible(false);
+    } catch (error) {
+      console.error("Error saving user:", error);
+      if (
+        error.response &&
+        error.response.status === 400 &&
+        error.response.data.detail === "Email already registered"
+      ) {
+        message.error("User already exists");
+      } else {
+        message.error("Error saving user");
+      }
     }
-    const usersResponse = await axios.get("http://localhost:8000/users");
-    setUsers(usersResponse.data);
-    setIsModalVisible(false);
   };
 
   const columns = [
-    { title: "First Name", dataIndex: "first_name", key: "first_name" },
-    { title: "Paternal Last Name", dataIndex: "paternal_last_name", key: "paternal_last_name" },
-    { title: "Maternal Last Name", dataIndex: "maternal_last_name", key: "maternal_last_name" },
-    { title: "Email", dataIndex: "email", key: "email" },
-    { title: "Birth Date", dataIndex: "birth_date", key: "birth_date" },
-    { title: "Status", dataIndex: "status", key: "status" },
-    { title: "Profiles", dataIndex: "profiles", key: "profiles" },
+    {
+      title: "First Name",
+      dataIndex: "first_name",
+      key: "first_name",
+    },
+    {
+      title: "Paternal Last Name",
+      dataIndex: "paternal_last_name",
+      key: "paternal_last_name",
+    },
+    {
+      title: "Maternal Last Name",
+      dataIndex: "maternal_last_name",
+      key: "maternal_last_name",
+    },
+    {
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
+    },
+    {
+      title: "Birth Date",
+      dataIndex: "birth_date",
+      key: "birth_date",
+      render: (text) => moment(text).format("YYYY-MM-DD"),
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+    },
+    {
+      title: "Profiles",
+      dataIndex: "profiles",
+      key: "profiles",
+      render: (profiles) => profiles.map((profile) => <div key={profile}>{profile}</div>),
+    },
     {
       title: "Action",
       key: "action",
@@ -82,21 +145,24 @@ function UsersTable() {
     maternal_last_name: "",
     email: "",
     birth_date: moment(),
-    status: "active",
     profiles: [],
+    password: "",
   };
 
   return (
     <DashboardLayout>
       <DashboardNavbar />
       <MDBox pt={6} pb={3}>
-        <Button type="primary" onClick={handleAddUser}>
-          Add User
-        </Button>
+        <MDBox display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+          <Title level={2}>Users Table</Title>
+          <Button type="primary" onClick={handleAddUser}>
+            Add User
+          </Button>
+        </MDBox>
         <Table columns={columns} dataSource={users} rowKey="_id" />
         <Modal
           title={editingUser ? "Edit User" : "Add User"}
-          visible={isModalVisible}
+          open={isModalVisible}
           onCancel={() => setIsModalVisible(false)}
           footer={null}
         >
@@ -115,11 +181,7 @@ function UsersTable() {
             >
               <Input />
             </Form.Item>
-            <Form.Item
-              name="maternal_last_name"
-              label="Maternal Last Name"
-              rules={[{ required: true, message: "Please input the maternal last name!" }]}
-            >
+            <Form.Item name="maternal_last_name" label="Maternal Last Name">
               <Input />
             </Form.Item>
             <Form.Item
@@ -130,21 +192,18 @@ function UsersTable() {
               <Input />
             </Form.Item>
             <Form.Item
+              name="password"
+              label="Password"
+              rules={[{ required: true, message: "Please input the password!" }]}
+            >
+              <Input.Password />
+            </Form.Item>
+            <Form.Item
               name="birth_date"
               label="Birth Date"
               rules={[{ required: true, message: "Please select the birth date!" }]}
             >
               <DatePicker />
-            </Form.Item>
-            <Form.Item
-              name="status"
-              label="Status"
-              rules={[{ required: true, message: "Please select the status!" }]}
-            >
-              <Select>
-                <Option value="active">Active</Option>
-                <Option value="inactive">Inactive</Option>
-              </Select>
             </Form.Item>
             <Form.Item
               name="profiles"
